@@ -1,0 +1,9 @@
+{
+  "libs": [
+    "browser",
+    "pegjs"
+  ],
+  "loadEagerly": [
+  ],
+  "plugins": {}
+}

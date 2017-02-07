@@ -1,0 +1,20 @@
+{
+  "name": "plop",
+  "version": "0.0.0",
+  "description": "PL/0 grammar and language using pegjs",
+  "main": "src/plop.js",
+  "repository": {},
+  "author": "Jonah Hooper",
+  "license": "MIT",
+  "scripts": {
+    "test": "mocha test",
+    "test:watch": "mocha test -w"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0"
+  },
+  "dependencies": {
+    "pegjs": "^0.10.0"
+  }
+}
