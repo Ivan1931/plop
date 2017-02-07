@@ -3,15 +3,12 @@ const Plop = require('../src/plop')
 const Ident = Plop.Ident
 const Number = Plop.Number
 const Expression = Plop.Expression
+const Condition = Plop.Condition
+const Statement = Plop.Statement
+const Block = Plop.Block
 
 describe('plop', () => {
   describe('#parse', () => {
-    describe('CONSTANT statement', () => {
-      it('parses constant statements', () => {
-        expect(1+1).to.equal(2)
-      })
-    })
-
     describe('IDENT symbols', () => {
       it('parses a single letter', () => {
         expect(Ident.parse('a')).to.equal('a')
@@ -163,6 +160,229 @@ describe('plop', () => {
             ]
           }
         )
+      })
+    })
+
+    describe('Conditions', () => {
+      it ('parses "1+1${operator}=2"', () => {
+        for(var op of ['=', '>=', '<=', '<', '>', '#']) {
+          expect(Condition.parse(`1+1${op}2`)).to.deep.equal({
+            left: {
+              first: { number: 1 },
+              sign: '+',
+              rest: [{
+                op: '+',
+                term: { number: 1 }
+              }]
+            },
+            op: op,
+            right: {
+              first: {number: 2},
+              sign: '+',
+              rest: []
+            }
+          })
+        }
+      })
+
+      it ('parsees odd${expression}', () => {
+        expect(Condition.parse(`odd 1`)).to.deep.equal({
+          odd: {
+            first: { number: 1 },
+            sign: '+',
+            rest: []
+          }
+        })
+      })
+    })
+
+    describe("Statement", () => {
+      it ('parses assignments', () => {
+        expect(Statement.parse('a := 1')).to.deep.equal({
+          assignment: {
+            ident: 'a',
+            expression: {
+              first: { number: 1 },
+              sign: '+',
+              rest: []
+            }
+          }
+        })
+      })
+
+      it ('parses function calls', () => {
+        expect(Statement.parse('   call          a')).to.deep.equal({
+          call: 'a'
+        })
+      })
+
+      it ('parses begin calls', () => {
+        const testStatement = `
+        begin
+        hello := 1 ;
+        world := 2;
+        end
+        `
+        const parseResult = Statement.parse(testStatement)
+        expect(parseResult).to.deep.equal({
+          begin: [
+            {
+              assignment: {
+                ident: 'hello',
+                expression: {
+                  sign: '+',
+                  first: { number: 1 },
+                  rest: []
+                }
+              }
+            },
+            {
+              assignment: {
+                ident: 'world',
+                expression: {
+                  sign: '+',
+                  first: { number: 2 },
+                  rest: []
+                }
+              }
+            }
+          ]
+        })
+      })
+
+      it ('parses if statement', () => {
+        const testStatement = `
+        if 1 = 1 then begin
+        call f ;
+        end
+        `
+        const testResult = Statement.parse(testStatement)
+        expect(testResult).to.deep.equal({
+          if : {
+            condition: {
+              left: {
+                sign: '+',
+                first: { number: 1 },
+                rest: []
+              },
+              op: '=',
+              right: {
+                sign: '+',
+                first: { number: 1 },
+                rest: []
+              }
+            },
+            statement: {
+              begin: [{
+                call: 'f'
+              }]
+            }
+          }
+        })
+      })
+
+      it ('parses while loop', () => {
+        const testLoop = `
+        while yellow = mellow do begin
+        yellow := yellow + 1 ;
+        end
+        `
+        const testResult = Statement.parse(testLoop)
+        expect(testResult).to.deep.equal({
+          while: {
+            condition: {
+              left: {
+                first: { ident: 'yellow' },
+                sign: '+',
+                rest: []
+              },
+              op: '=',
+              right: {
+                first: { ident: 'mellow' },
+                sign: '+',
+                rest: []
+              }
+            },
+            statement: {
+              begin: [{
+                assignment: {
+                  ident: 'yellow',
+                  expression: {
+                    sign: '+',
+                    first: { ident: 'yellow' },
+                    rest: [{
+                      op: '+',
+                      term: { number: 1 }
+                    }]
+                  }
+                }
+              }]
+            }
+          }
+        })
+      })
+    })
+
+    describe('parsing a Block', () => {
+      var expectedBlockResult;
+      beforeEach(() => {
+      expectedBlockResult = {
+        consts: null,
+        vars: null,
+        statement: {
+          call: 'a'
+        },
+        procedures: [{
+          name: 'assignOneToA',
+          body: {
+            consts: null,
+            vars: null,
+            procedures: [],
+            statement: {
+              begin: [{
+                assignment: {
+                  ident: 'a',
+                  expression: {
+                    first: { number: 1 },
+                    sign: '+',
+                    rest: []
+                  }
+                }
+              }]
+            }
+          }
+        }]
+      }
+    })
+      it ('parses a block with only a procedure', () => {
+        const testBlock = `
+        procedure assignOneToA; begin
+        a := 1 ;
+        end;
+
+        call a
+        `
+        const testResult = Block.parse(testBlock)
+        expect(testResult).to.deep.equal(expectedBlockResult)
+      })
+      it ('parses block with procedures and vars', () => {
+        const testBlock = `
+        const x=2, y=3, z =      4;
+        var a,b,c;
+        procedure assignOneToA; begin
+          a := 1 ;
+        end;
+
+        call a
+        `
+        expectedBlockResult.consts = [
+          {ident: 'x', value: 2},
+          {ident: 'y', value: 3},
+          {ident: 'z', value: 4}
+        ]
+        expectedBlockResult.vars = ['a', 'b', 'c']
+        const actualResult = Block.parse(testBlock)
+        expect(expectedBlockResult).to.deep.equal(actualResult)
       })
     })
   })

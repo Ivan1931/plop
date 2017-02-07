@@ -1,6 +1,108 @@
 const P = require('pegjs')
 
-const condition = `
+const blockPartial = `
+block = consts:(const / nothing) vars:(var / nothing) procedures:procedures statement:statement {
+  return {
+    consts: consts,
+    vars: vars,
+    procedures: procedures,
+    statement: statement
+  }
+}
+
+const =
+  constWord ident:ident "=" value:number rest:constAssignment* ";" {
+    return [{ident: ident, value: value}].concat(rest)
+  }
+constAssignment = "," ident:ident "=" value:number {
+  return {
+    ident: ident,
+    value: value
+  }
+}
+constWord = _ 'const' _
+
+var = varWord ident:ident rest:identCommas* ";" {
+  return [ident].concat(rest)
+}
+
+identCommas = "," ident:ident {
+  return ident
+}
+
+varWord = _ "var" _
+
+procedures = procedures:procedureList*
+
+procedureList = procedureWord name:ident ";" block:block ";" {
+  return {
+    name: name,
+    body: block
+  }
+}
+
+procedureWord = _ "procedure" _
+`
+
+const statementPartial = `
+statement = _ statement:(assignment / call / begin / if / while / "") _ {
+  return statement
+}
+
+assignment = ident:ident ":=" expression:expression {
+  return {
+    assignment: {
+      ident: ident,
+      expression: expression
+    }
+  }
+}
+
+call = callWord ident:ident {
+  return { call: ident }
+}
+
+callWord = _ "call" _
+
+begin = "begin" first:statement rest:semi_colon_statement+ end {
+  let statements = [first]
+      .concat(rest)
+      .filter(stm => stm !== '')
+  return { begin: statements }
+}
+
+semi_colon_statement = !end _ ";" _ statement:statement {
+  return statement
+}
+
+end = _ "end" _
+
+if = ifWord condition:condition thenWord statement:statement {
+  return {
+    if: {
+      condition: condition,
+      statement: statement
+    }
+  }
+}
+
+ifWord = _ "if" _
+thenWord = _ "then" _
+
+while = whileWord condition:condition doWord statement:statement {
+  return {
+    while: {
+      condition: condition,
+      statement: statement
+    }
+  }
+}
+
+whileWord = _ "while" _
+doWord = _ "do" _
+`
+
+const conditionPartial = `
 condition = odd
   / _ left:expression _ op:operator _ right:expression _ {
     return {
@@ -10,7 +112,7 @@ condition = odd
     }
   }
 
-odd = _ "odd" __ exp:condition {
+odd = _ "odd" __ exp:expression {
   return {
     odd: exp
   }
@@ -19,7 +121,7 @@ odd = _ "odd" __ exp:condition {
 operator = "=" / "#" / "<=" / "<" / ">=" / ">"
 `
 
-const expression_partial = `
+const expressionPartial = `
 expression = sign:("+"/"-"/"") _ first:term rest:op_then_term* {
   var expr = {
     first: first,
@@ -81,6 +183,10 @@ _ "whitespace" = [\\t\\n\\r ]*
 
 __ "forced whitespcace" = [\\t\\n\\r ]+
 
+nothing = "" {
+  return null
+}
+
 `
 
 const ident = `
@@ -108,7 +214,7 @@ module.exports.Number = P.generate(`
 `)
 
 const expression = `
-  ${expression_partial}
+  ${expressionPartial}
 
   ${term}
 
@@ -122,4 +228,25 @@ const expression = `
 `
 
 module.exports.Expression = P.generate(expression)
-module.exports.Condition = condition
+
+const condition = `
+  ${conditionPartial}
+
+  ${expression}
+`
+module.exports.Condition = P.generate(condition)
+
+const statement = `
+  ${statementPartial}
+
+  ${condition}
+`
+module.exports.Statement = P.generate(statement)
+
+const block = `
+  ${blockPartial}
+
+  ${statement}
+`
+
+module.exports.Block = P.generate(block)
