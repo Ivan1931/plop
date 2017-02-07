@@ -137,7 +137,7 @@ describe('plop', () => {
                   "rest": [
                     {
                       "op": "*",
-                      "factor": {
+                      "term": {
                         "expression": {
                           "first": {
                             "number": 4
