@@ -1,36 +1,65 @@
 function evaluateProcedure(procedure, env) {
+  return {}
 }
 
 function evaluateStatement(statement, env) {
   if (statement.call !== undefined) {
-    return evaluateCall(statement.call, env)
+    evaluateCall(statement.call, env)
   } else if (statement.assignment !== undefined) {
-    return evaluateAssignment(statement.assignment, env)
+    evaluateAssignment(statement.assignment, env)
   } else if (statement.if !== undefined) {
-    return evaluateIf(statement.if, env)
+    evaluateIf(statement.if, env)
   } else if (statement.while !== undefined) {
-    return evaluateWhile(statement.while, env)
+    evaluateWhile(statement.while, env)
+  } else if (statement.begin !== undefined) {
+    evaluateBegin(statement.begin, env)
   } else {
-    throw new Error(`Unrecognized statement ${statement}`)
+    throw new Error(`Unrecognized statement ${pp(statement)}`)
   }
 }
+
+module.exports.evaluateStatement = evaluateStatement
 
 function evaluateCall(callIdent, env) {
   let procedure = env.procedures[callIdent]
   if (procedure) {
-    return evaluateProcedure(procedure)
+    evaluateProcedure(procedure, env)
   } else {
     throw new Error(`Procedure ${callIdent} is not defined`)
   }
 }
 
 function evaluateAssignment(assignment, env) {
+  let ident = assignment.ident
+  let expressionResult = evaluateExpression(assignment.expression, env)
+  let variable = env.vars[ident]
+  if (variable !== undefined) {
+    env.vars[ident] = { number: expressionResult }
+    return expressionResult
+  } else {
+    throw new Error(`${ident} has not been defined as a variable`)
+  }
 }
 
-function evaluateIf(ifStatementt, env) {
+function evaluateIf(ifStatement, env) {
+  let condition = evaluateCondition(ifStatement.condition, env)
+  if (condition) {
+    evaluateStatement(ifStatement.statement, env)
+  }
 }
 
 function evaluateWhile(whileStatement, env) {
+  var condition = evaluateCondition(whileStatement.condition, env)
+  while (condition) {
+    evaluateStatement(whileStatement.statement, env)
+    condition = evaluateCondition(whileStatement.condition, env)
+  }
+}
+
+function evaluateBegin(statements, env) {
+  for (var statement of statements) {
+    evaluateStatement(statement, env)
+  }
 }
 
 function evaluateCondition(condition, env) {
@@ -74,11 +103,15 @@ function evaluateExpression(expression, env) {
 }
 
 function evaluateIdent(ident, env) {
-  let resolved = env[ident]
-  if (resolved === undefined) {
-    throw new SyntaxError(`Symbol ${ident} is undefined :(`)
+  let constant = env.consts[ident]
+  if (constant !== undefined) {
+    return constant
   }
-  return evaluateExpression(resolved, env)
+  let resolved = env.vars[ident]
+  if (resolved !== undefined) {
+    return evaluateTerm(resolved, env)
+  }
+  throw new SyntaxError(`${ident} is undefined`)
 }
 
 function pp(blah) {
