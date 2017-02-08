@@ -34,4 +34,40 @@ describe('Evaluator', () => {
       expect(Evaluator.evaluateExpression(testNegative)).to.deep.equal(-4)
     })
   })
+  describe('#evaluateCondition', () => {
+    const one_a = {
+      first: { number: 1 },
+      sign: '+',
+      rest: []
+    }
+
+    const one_b = {
+      first: { number: 1 },
+      sign: '+',
+      rest: []
+    }
+
+    const two = {
+      first: { number: 2 },
+      sign: 2,
+      rest: []
+    }
+    it('evaluates "#" expression', () => {
+      const notEqual = {
+        left: one_a,
+        op: '#',
+        right: two
+      }
+      expect(Evaluator.evaluateCondition(notEqual)).to.equal(true)
+    })
+
+    it('evaluates "=" expression', () => {
+      const equal = {
+        left: one_a,
+        op: '=',
+        right: one_b
+      }
+      expect(Evaluator.evaluateCondition(equal)).to.equal(true)
+    })
+  })
 })
