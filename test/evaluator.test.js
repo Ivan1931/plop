@@ -1,6 +1,7 @@
 const expect = require('chai').expect
 const Evaluator = require('../src/evaluator')
 const Statement = require('../src/plop').Statement
+const Block = require('../src/plop').Block
 
 describe('Evaluator', () => {
   describe('#evaluateExpression', () => {
@@ -113,6 +114,64 @@ describe('Evaluator', () => {
           },
           consts: {}
         })
+      })
+    })
+    describe('begin statements', () => {
+      it ('evaluates begin statement with assignment', () => {
+        const testBegin = Statement.parse(`
+        begin
+          a := a + a ;
+        end
+        `)
+        var testEnv = {
+          vars: {
+            a: { number: 2 },
+          },
+          consts: {}
+        }
+        Evaluator.evaluateStatement(testBegin, testEnv)
+        expect(testEnv).to.deep.equal({
+          vars: {
+            a: { number: 4 }
+          },
+          consts: {}
+        })
+      })
+    })
+  })
+  describe('#evaluateBlock', () => {
+    describe('Add one and two', () => {
+      it ('can evaluate complex multi-statement blocks', () => {
+        const testBlock = Block.parse(`
+        const
+          one = 1,
+          three = 2;
+
+        var n;
+
+        procedure addOne; n := n + one;
+
+        procedure addThree; n := n + three;
+
+        begin
+          n := 1;
+          while n < 20 do begin
+            if odd n then begin
+              call addOne;
+            end;
+            if odd n+1 then begin
+              call addThree;
+            end;
+          end;
+        end
+        `)
+        var testEnv = {
+          consts: {},
+          vars: {},
+          procedures: {}
+        }
+        Evaluator.evaluateBlock(testBlock, testEnv)
+        expect(testEnv.vars.n).to.deep.equal({number: 21})
       })
     })
   })

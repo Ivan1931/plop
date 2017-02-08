@@ -1,5 +1,35 @@
+function evaluateBlock(block, env) {
+  addVars(block.vars, env)
+  addConsts(block.consts, env)
+  addProcedures(block.procedures, env)
+  evaluateStatement(block.statement, env)
+}
+
+module.exports.evaluateBlock = evaluateBlock
+
 function evaluateProcedure(procedure, env) {
-  return {}
+  evaluateBlock(procedure.body, env)
+}
+
+function addVars(vars, env) {
+  if (!vars) return
+  for (var varName of vars) {
+    env.vars[varName] = false
+  }
+}
+
+function addConsts(consts, env) {
+  if (!consts) return
+  for (var constant of consts) {
+    env.consts[constant.ident] = constant.value
+  }
+}
+
+function addProcedures(procedures, env) {
+  if (!procedures) return
+  for (var procedure of procedures) {
+    env.procedures[procedure.name] = procedure
+  }
 }
 
 function evaluateStatement(statement, env) {
@@ -63,6 +93,10 @@ function evaluateBegin(statements, env) {
 }
 
 function evaluateCondition(condition, env) {
+  if (condition.odd !== undefined) {
+    let expression = evaluateExpression(condition.odd, env)
+    return (expression % 2) === 0
+  }
   let left = evaluateExpression(condition.left, env)
   let right = evaluateExpression(condition.right, env)
   switch (condition.op) {

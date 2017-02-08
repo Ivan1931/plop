@@ -45,7 +45,7 @@ procedureWord = _ "procedure" _
 `
 
 const statementPartial = `
-statement = _ statement:(assignment / call / begin / if / while / "") _ {
+statement = _ statement:(call / begin / if / while / assignment / "") _ {
   return statement
 }
 

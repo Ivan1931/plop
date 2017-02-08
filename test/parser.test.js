@@ -216,11 +216,12 @@ describe('plop', () => {
         })
       })
 
-      it ('parses begin calls', () => {
+      it ('parses 2 assign statements followed by a begin statement', () => {
         const testStatement = `
         begin
-        hello := 1 ;
-        world := 2;
+          hello := 1 ;
+          world := 2;
+          call q;
         end
         `
         const parseResult = Statement.parse(testStatement)
@@ -245,7 +246,8 @@ describe('plop', () => {
                   rest: []
                 }
               }
-            }
+            },
+            { call: 'q' }
           ]
         })
       })
