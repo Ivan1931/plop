@@ -1,7 +1,8 @@
 const expect = require('chai').expect
-const Evaluator = require('../src/evaluator')
-const Statement = require('../src/plop').Statement
-const Block = require('../src/plop').Block
+const Evaluator = require('../src/plop').Evaluator
+const Statement = require('../src/plop').Parser.Statement
+const Block = require('../src/plop').Parser.Block
+const Parser = require('../src/plop').Parser.Parser
 
 describe('Evaluator', () => {
   describe('#evaluateExpression', () => {
@@ -173,6 +174,82 @@ describe('Evaluator', () => {
         Evaluator.evaluateBlock(testBlock, testEnv)
         expect(testEnv.vars.n).to.deep.equal({number: 21})
       })
+
+    })
+  })
+  describe('#evaluate', () => {
+    it ('evaluates another really complex expression', () => {
+      const testProgram = `
+      const
+        m =  7,
+        n = 85;
+
+      var
+        x, y, z, q, r;
+
+      procedure multiply;
+      var a, b;
+      begin
+        a := x;
+        b := y;
+        z := 0;
+        while b > 0 do begin
+          if odd b then z := z + a;
+          a := 2 * a;
+          b := b / 2;
+        end;
+      end;
+
+      procedure divide;
+      var w;
+      begin
+        r := x;
+        q := 0;
+        w := y;
+        while w <= r do w := 2 * w;
+        while w > y do begin
+          q := 2 * q;
+          w := w / 2;
+          if w <= r then begin
+            r := r - w;
+            q := q + 1;
+          end;
+        end;
+      end;
+
+      procedure gcd;
+      var f, g;
+      begin
+        f := x;
+        g := y;
+        while f # g do begin
+          if f < g then g := g - f;
+          if g < f then f := f - g;
+        end;
+        z := f
+      end;
+
+      begin
+        x := m;
+        y := n;
+        call multiply;
+        print z;
+        x := 25;
+        y :=  3;
+        call divide;
+        print q;
+        x := 84;
+        y := 36;
+        call gcd;
+        print z;
+      end
+      `
+      const testProgramAST = Parser.parse(testProgram)
+      var printed = []
+      Evaluator.evaluate(testProgramAST, value => {
+        printed.push(value)
+      })
+      expect(printed).to.deep.equal([294,8,12])
     })
   })
 })

@@ -1,3 +1,15 @@
+function evaluate(block, printer) {
+  var env = {
+    consts: {},
+    vars: {},
+    procedures: {},
+    printer: printer
+  }
+  evaluateBlock(block, env)
+}
+
+module.exports.evaluate = evaluate
+
 function evaluateBlock(block, env) {
   addVars(block.vars, env)
   addConsts(block.consts, env)
@@ -43,6 +55,8 @@ function evaluateStatement(statement, env) {
     evaluateWhile(statement.while, env)
   } else if (statement.begin !== undefined) {
     evaluateBegin(statement.begin, env)
+  } else if (statement.print !== undefined) {
+    evaluatePrint(statement.print, env)
   } else {
     throw new Error(`Unrecognized statement ${pp(statement)}`)
   }
@@ -57,6 +71,10 @@ function evaluateCall(callIdent, env) {
   } else {
     throw new Error(`Procedure ${callIdent} is not defined`)
   }
+}
+
+function evaluatePrint(printIdent, env) {
+  env.printer(evaluateIdent(printIdent, env))
 }
 
 function evaluateAssignment(assignment, env) {
@@ -118,13 +136,13 @@ function evaluateExpression(expression, env) {
     let op = term.op
     let result = evaluateTerm(term.term, env)
     if (op === '-') {
-      op -= result
+      value -= result
     } else if (op === '+') {
       value += result
     } else if (op === '*') {
       value *= result
     } else if (op === '/') {
-      value /= result
+      value = Math.floor(value / result)
     }
     else {
       throw new SyntaxError(`${op} is not a valid operator`)

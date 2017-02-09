@@ -1,11 +1,11 @@
 const expect = require('chai').expect
 const Plop = require('../src/plop')
-const Ident = Plop.Ident
-const Number = Plop.Number
-const Expression = Plop.Expression
-const Condition = Plop.Condition
-const Statement = Plop.Statement
-const Block = Plop.Block
+const Ident = Plop.Parser.Ident
+const Number = Plop.Parser.Number
+const Expression = Plop.Parser.Expression
+const Condition = Plop.Parser.Condition
+const Statement = Plop.Parser.Statement
+const Block = Plop.Parser.Block
 
 describe('plop', () => {
   describe('#parse', () => {
@@ -207,6 +207,12 @@ describe('plop', () => {
               rest: []
             }
           }
+        })
+      })
+
+      it ('parses print calls', () => {
+        expect(Statement.parse('     print     a')).to.deep.equal({
+          print: 'a'
         })
       })
 

@@ -45,7 +45,7 @@ procedureWord = _ "procedure" _
 `
 
 const statementPartial = `
-statement = _ statement:(call / begin / if / while / assignment / "") _ {
+statement = _ statement:(call / print / begin / if / while / assignment / "") _ {
   return statement
 }
 
@@ -57,6 +57,14 @@ assignment = ident:ident ":=" expression:expression {
     }
   }
 }
+
+print = printWord ident:ident {
+  return {
+    print: ident
+  }
+}
+
+printWord = _ "print" _
 
 call = callWord ident:ident {
   return { call: ident }
@@ -135,7 +143,7 @@ expression = sign:("+"/"-"/"") _ first:term rest:op_then_term* {
   return expr
 }
 
-op_then_term = _ op:("+"/"*") _ term:term {
+op_then_term = _ op:("+"/"-") _ term:term {
   return {
     op: op,
     term: term
@@ -249,4 +257,8 @@ const block = `
   ${statement}
 `
 
-module.exports.Block = P.generate(block)
+const Block = P.generate(block)
+
+module.exports.Block = Block
+
+module.exports.Parser = Block
