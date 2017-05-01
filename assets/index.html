@@ -6,16 +6,21 @@
     <script type="text/javascript" src="build/plop.bundle.js" ></script>
   </head>
   <body>
-      <textarea>
-      begin
-        if a = 1 then begin
-          a := a - 2;
-        end;
-      end
-      </textarea>
+      <div id="begin-editor">
+        <pre class="viewer">
+        </pre>
+        <pre class="editor" contenteditable="true">
+          begin
+            hello := 1 ;
+            world := 2;
+            call q;
+          end
+        </pre>
+        <button class="evaluate-button">Evaluate</button>
+      </div>
 
     <script type="text/javascript">
-      Plop.Viewer.init()
+      Plop.Viewer.initParser("begin-editor", Plop.Parser.Statement.parse)
     </script>
   </body>
 </html>
