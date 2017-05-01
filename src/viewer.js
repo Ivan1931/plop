@@ -1,6 +1,6 @@
 const Parser = require('./parser')
 const Evaluator = require('./evaluator')
-const codemirror = require('codemirror')
+const _  = require('lodash')
 
 
 function initEditable(pane) {
@@ -20,21 +20,50 @@ const editableStyle = `
   border-radius: 3px;
 `
 
-function renderContent(editable, parserCallback) {
-  var code = editable.editor.textContent
-  try {
-    let ast = parserCallback(code)
-    let astText = JSON.stringify(ast, null, 2)
-    editable.viewer.textContent = astText
-    editable.viewer.style.cssText = editableStyle
-  } catch (parseError) {
-    console.log(parseError)
+function applyParseError(editable, parseError) {
+  let location = parseError.location
+  let startLine = location.start.line - 1
+  let lines = editable.editor.textContent.split('\n')
+  editable.editor.innerHTML = _.chain(lines).map((item, idx) => {
+    if (idx === startLine) {
+      return `<span style="background-color: rgba(200, 120, 120, 0.4)">${item}</span>`
+    } else {
+      return item
+    }
+  })
+  .join('\n')
+  .value()
+}
+
+function unapplyParseError(editable) {
+  editable.editor.textContent = editable.editor.textContent
+}
+
+function handleParseError(editable, parseError) {
     editable.viewer.textContent = parseError.toString()
     editable.viewer.style.cssText = `
       border: solid 2px rgb(230, 70, 70);
       border-radius: 3px;
       padding:1px;
     `
+    applyParseError(editable, parseError)
+}
+
+function attemptParse(editable, parserCallback) {
+    var code = editable.editor.textContent
+    let ast = parserCallback(code)
+    let astText = JSON.stringify(ast, null, 2)
+    unapplyParseError(editable)
+    editable.viewer.textContent = astText
+    editable.viewer.style.cssText = editableStyle
+
+}
+
+function renderContent(editable, parserCallback) {
+  try {
+    attemptParse(editable, parserCallback)
+  } catch (parseError) {
+    handleParseError(editable, parseError)
   }
 }
 

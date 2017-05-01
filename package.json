@@ -16,7 +16,7 @@
     "webpack": "^2.2.1"
   },
   "dependencies": {
-    "codemirror": "^5.23.0",
+    "lodash": "^4.17.4",
     "pegjs": "^0.10.0",
     "webpack-dev-server": "^2.3.0"
   }
