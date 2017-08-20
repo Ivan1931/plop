@@ -58,9 +58,9 @@ assignment = ident:ident ":=" expression:expression {
   }
 }
 
-print = printWord ident:ident {
+print = printWord expression:expression {
   return {
-    print: ident
+    print: expression
   }
 }
 

@@ -212,7 +212,36 @@ describe('plop', () => {
 
       it ('parses print calls', () => {
         expect(Statement.parse('     print     a')).to.deep.equal({
-          print: 'a'
+            print: {
+              first: {
+                ident: 'a'
+              },
+              rest: [],
+              sign: '+'
+            }
+        })
+        expect(Statement.parse(' print 1 ')).to.deep.equal({
+          print: {
+            first: {
+              number: 1
+            },
+            rest: [],
+            sign: "+"
+          }
+        })
+        expect(Statement.parse(' print a+1')).to.deep.equal({
+            print: {
+              first: {
+                ident: 'a'
+              },
+              rest: [{
+                op: '+',
+                term: {
+                  number: 1
+                }
+              }],
+              sign: '+'
+            }
         })
       })
 

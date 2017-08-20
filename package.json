@@ -13,11 +13,14 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "mocha": "^3.2.0",
-    "webpack": "^2.2.1"
+    "mocha-jsdom": "^1.1.0",
+    "webpack": "^2.2.1",
+    "css-loader": "^0.28.4",
+    "style-loader": "^0.18.2",
+    "webpack-dev-server": "^2.3.0"
   },
   "dependencies": {
-    "lodash": "^4.17.4",
-    "pegjs": "^0.10.0",
-    "webpack-dev-server": "^2.3.0"
+    "codemirror": "^5.28.0",
+    "pegjs": "^0.10.0"
   }
 }

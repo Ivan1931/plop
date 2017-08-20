@@ -26,7 +26,7 @@ function evaluateProcedure(procedure, env) {
 function addVars(vars, env) {
   if (!vars) return
   for (var varName of vars) {
-    env.vars[varName] = false
+    env.vars[varName] = undefined
   }
 }
 
@@ -69,19 +69,24 @@ function evaluateCall(callIdent, env) {
   if (procedure) {
     evaluateProcedure(procedure, env)
   } else {
-    throw new Error(`Procedure ${callIdent} is not defined`)
+    throw new Error(`Procedure "${callIdent}" is not defined`)
   }
 }
 
-function evaluatePrint(printIdent, env) {
-  env.printer(evaluateIdent(printIdent, env))
+function isPrintable(printIdent, env) {
+    return env.consts[printIdent] !== undefined
+        || env.vars[printIdent] !== undefined
+}
+
+function evaluatePrint(printable, env) {
+  env.printer(evaluateExpression(printable, env))
 }
 
 function evaluateAssignment(assignment, env) {
   let ident = assignment.ident
   let expressionResult = evaluateExpression(assignment.expression, env)
-  let variable = env.vars[ident]
-  if (variable !== undefined) {
+  if (ident in env.vars) {
+    let variable = env.vars[ident]
     env.vars[ident] = { number: expressionResult }
     return expressionResult
   } else {
@@ -113,7 +118,7 @@ function evaluateBegin(statements, env) {
 function evaluateCondition(condition, env) {
   if (condition.odd !== undefined) {
     let expression = evaluateExpression(condition.odd, env)
-    return (expression % 2) === 0
+    return (expression % 2) !== 0
   }
   let left = evaluateExpression(condition.left, env)
   let right = evaluateExpression(condition.right, env)
@@ -145,7 +150,7 @@ function evaluateExpression(expression, env) {
       value = Math.floor(value / result)
     }
     else {
-      throw new SyntaxError(`${op} is not a valid operator`)
+      throw new Error(`"${op}" is not a valid operator`)
     }
   }
   if (expression.sign === '-') {
@@ -155,15 +160,21 @@ function evaluateExpression(expression, env) {
 }
 
 function evaluateIdent(ident, env) {
-  let constant = env.consts[ident]
-  if (constant !== undefined) {
+  if (ident in env.consts) {
+    let constant = env.consts[ident]
+    if (constant === undefined) {
+      throw new Error(`"${ident}" has been created as constant but not assigned`)
+    }
     return constant
   }
-  let resolved = env.vars[ident]
-  if (resolved !== undefined) {
+  if (ident in env.vars) {
+    let resolved = env.vars[ident]
+    if (resolved === undefined) {
+      throw new Error(`"${ident}" has been created as variable but not assigned`)
+    }
     return evaluateTerm(resolved, env)
   }
-  throw new SyntaxError(`${ident} is undefined`)
+  throw new Error(`"${ident}" is not defined as a const or var`)
 }
 
 function pp(blah) {
@@ -178,7 +189,7 @@ function evaluateTerm(term, env) {
   } else if (term.first !== undefined) {
     return evaluateExpression(term, env)
   } else {
-    throw new SyntaxError(`Error: ${pp(term)}\nis not a valid term :(`)
+    throw new Error(`Error: "${pp(term)}" is not a valid term :(`)
   }
 }
 

@@ -140,13 +140,58 @@ describe('Evaluator', () => {
       })
     })
   })
+  describe('odd', () => {
+    it ('evaluates odd statement correctly', () => {
+        var testEnv = {
+          vars: {
+            n: { number: 1 },
+          },
+          consts: {}
+        }
+        const testOdd = Statement.parse(`
+            begin
+                if odd 1 then begin
+                    n := 1;
+                end;
+
+                if odd n+1 then begin
+                    n := 2;
+                end;
+                
+               if odd n then begin
+                    n := 3;
+               end;
+            end
+        `)
+        Evaluator.evaluateStatement(testOdd, testEnv)
+        expect(testEnv.vars.n).to.deep.equal({number: 3})
+        
+    })
+  })
   describe('#evaluateBlock', () => {
+    var testEnv = {
+      consts: {},
+      vars: {},
+      procedures: {},
+      printer: (i) => {}
+    }
+    var unassigned = Block.parse(`
+      var n;
+      begin
+        print n;
+      end
+    `)
+    it ('throws error when you try print unassigned variable', () => {
+        expect(() => {
+            Evaluator.evaluateBlock(unassigned, testEnv)
+        }).to.throw(`"n" has been created`)
+    })
     describe('Add one and two', () => {
       it ('can evaluate complex multi-statement blocks', () => {
         const testBlock = Block.parse(`
         const
           one = 1,
-          three = 2;
+          three = 3;
 
         var n;
 
@@ -156,9 +201,10 @@ describe('Evaluator', () => {
 
         begin
           n := 1;
-          while n < 20 do begin
+          while n < 10 do begin
             if odd n then begin
               call addOne;
+              print n;
             end;
             if odd n+1 then begin
               call addThree;
@@ -166,13 +212,13 @@ describe('Evaluator', () => {
           end;
         end
         `)
-        var testEnv = {
-          consts: {},
-          vars: {},
-          procedures: {}
-        }
         Evaluator.evaluateBlock(testBlock, testEnv)
-        expect(testEnv.vars.n).to.deep.equal({number: 21})
+        expect(testEnv.vars.n).to.deep.equal({number: 13})
+        let sum = 0
+        Evaluator.evaluate(testBlock, (n) => {
+            sum += n
+        })
+        expect(sum).to.deep.equal(18)
       })
 
     })
@@ -249,7 +295,7 @@ describe('Evaluator', () => {
       Evaluator.evaluate(testProgramAST, value => {
         printed.push(value)
       })
-      expect(printed).to.deep.equal([294,8,12])
+      expect(printed).to.deep.equal([595,8,12])
     })
   })
 })

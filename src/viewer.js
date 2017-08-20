@@ -1,10 +1,21 @@
 const Parser = require('./parser')
 const Evaluator = require('./evaluator')
-const _  = require('lodash')
+/* Skep hack to prevent this module from breaking tests */
+let CodeMirror;
+try {
+  CodeMirror = require('codemirror')
+} catch(e) {
+}
 
 
 function initEditable(pane) {
-  let editor = pane.getElementsByClassName('editor').item(0)
+  let body = document.getElementsByTagName('body')[0]
+  let style = document.createElement('style')
+      style.innerHTML = require("!!css-loader!codemirror/lib/codemirror.css")
+  body.appendChild(style)
+  let editor = CodeMirror.fromTextArea(pane.getElementsByClassName('editor').item(0), {
+    lineNumbers: true
+  })
   let viewer = pane.getElementsByClassName('viewer').item(0)
   let button = pane.getElementsByClassName('evaluate-button').item(0)
   return {
@@ -20,57 +31,55 @@ const editableStyle = `
   border-radius: 3px;
 `
 
-function applyParseError(editable, parseError) {
-  let location = parseError.location
-  let startLine = location.start.line - 1
-  let lines = editable.editor.textContent.split('\n')
-  editable.editor.innerHTML = _.chain(lines).map((item, idx) => {
-    if (idx === startLine) {
-      return `<span style="background-color: rgba(200, 120, 120, 0.4)">${item}</span>`
-    } else {
-      return item
-    }
-  })
-  .join('\n')
-  .value()
-}
+const errorViewStyle = `
+  border: solid 2px rgb(230, 70, 70);
+  border-radius: 3px;
+  padding:1px;
+`
 
-function unapplyParseError(editable) {
-  editable.editor.textContent = editable.editor.textContent
+function makeErrorMessage(parseError) {
+    return `Error on line ${parseError.location.start.line}: ${parseError.toString()}`
 }
 
 function handleParseError(editable, parseError) {
-    editable.viewer.textContent = parseError.toString()
-    editable.viewer.style.cssText = `
-      border: solid 2px rgb(230, 70, 70);
-      border-radius: 3px;
-      padding:1px;
-    `
-    applyParseError(editable, parseError)
+    editable.viewer.textContent = makeErrorMessage(parseError)
+    editable.viewer.style.cssText = errorViewStyle
+}
+
+function getEditorContent(editable) {
+    return editable.editor.getValue()
 }
 
 function attemptParse(editable, parserCallback) {
-    var code = editable.editor.textContent
+    var code = getEditorContent(editable)
     let ast = parserCallback(code)
-    let astText = JSON.stringify(ast, null, 2)
-    unapplyParseError(editable)
+    let astText = ast
+    if (editable.prettyPrint) {
+        astText = JSON.stringify(ast, null, 2)
+    } 
     editable.viewer.textContent = astText
-    editable.viewer.style.cssText = editableStyle
+    setStyle(editable)
+}
 
+function handleRuntimeError(editable, runtimeError) {
+    editable.viewer.textContent = runtimeError.toString()
+    editable.viewer.style.cssText = errorViewStyle
 }
 
 function renderContent(editable, parserCallback) {
   try {
     attemptParse(editable, parserCallback)
-  } catch (parseError) {
-    handleParseError(editable, parseError)
+  } catch (error) {
+    if (error.location !== undefined) {
+        handleParseError(editable, error)
+    } else {
+        handleRuntimeError(editable, error)
+    }
   }
 }
 
 
 function setStyle(editable) {
-  //pane.style.cssText = `display: flex;`
-  editable.editor.style.cssText = editableStyle
   editable.viewer.style.cssText = editableStyle
 }
 
@@ -83,9 +92,19 @@ function addAction(editable, parserCallback) {
 function initParser(parserEditorID, parserCallback) {
   let pane = document.getElementById(parserEditorID)
   let editable = initEditable(pane)
+  editable.prettyPrint = true
   renderContent(editable, parserCallback)
   addAction(editable, parserCallback)
   setStyle(editable)
 }
 
+function initEvaluator(parserEditorID, evaluatorCallback) {
+  let pane = document.getElementById(parserEditorID)
+  let editable = initEditable(pane)
+  renderContent(editable, evaluatorCallback)
+  addAction(editable, evaluatorCallback)
+  setStyle(editable)
+}
+
 module.exports.initParser = initParser
+module.exports.initEvaluator = initEvaluator

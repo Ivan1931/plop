@@ -15,4 +15,15 @@ module.exports = {
   devServer: {
     contentBase: path.resolve(__dirname, './assets')
   },
+  module: {
+    rules: [
+      {
+        test: /\.css$/, 
+        use: [
+          'style-loader',
+          'css-loader'
+        ]
+      }
+    ]
+  }
 }
